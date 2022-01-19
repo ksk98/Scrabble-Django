@@ -20,7 +20,11 @@ from scrabble import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', views.home),
     path('login/', views.login_request),
     path('register/', views.register_request),
-    path('logout/', views.logout_request)
+    path('logout/', views.logout_request),
+    path('lobby/', views.lobby),
+    path('room/<uuid:room_id>/', views.room),
+    path('create_room/', views.create_room)
 ]

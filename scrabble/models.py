@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -10,10 +12,10 @@ class UserProfile(models.Model):
 
 
 class Room(models.Model):
-    id = models.UUIDField()
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), editable=False)
     name = models.TextField()
-    player1 = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    player2 = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    player1 = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name="p1")
+    player2 = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name="p2")
 
     def join(self, user):
         if self.player1 is None:

@@ -7,22 +7,28 @@
 
 
 {% block content %}
+    <div class="container py-5" style="text-align: center;">
     <h1>Scrabble</h1>
-    <div class="container py-5">
         <table>
             <tr>
+                <th>
+                    <label for="room_name">Room name:</label>
+                    <input type="text" id="room_name">
+                </th>
                 <script>
                     function createRoom() {
-
+                        const rn = document.querySelector('#room_name').value;
+                        window.location = "/create_room/?room_name=" + rn
                     }
                 </script>
-                <th></th>
-                <th><button onclick="createRoom();">CREATE</button></th>
+                <th>
+                    <button onclick="createRoom();">CREATE</button>
+                </th>
             </tr>
             {% for room in rooms %}
                 <script>
                     function visitRoom() {
-                        window.location = "ws://" + window.location.host + "/ws/room/" + {{ room.id }} + "/"
+                        window.location = "/room/" + {{ room.id }} + "/"
                     }
                 </script>
                 <tr>
