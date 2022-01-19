@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load crispy_forms_filters %}
+
+{% block head %}
+  <title>Scrabble</title>
+{% endblock %}
+
+
+{% block content %}
+    <h1>Scrabble</h1>
+    <div class="container py-5">
+        <table>
+            <tr>
+                <script>
+                    function createRoom() {
+
+                    }
+                </script>
+                <th></th>
+                <th><button onclick="createRoom();">CREATE</button></th>
+            </tr>
+            {% for room in rooms %}
+                <script>
+                    function visitRoom() {
+                        window.location = "ws://" + window.location.host + "/ws/room/" + {{ room.id }} + "/"
+                    }
+                </script>
+                <tr>
+                    <th>{{ room.name }}</th>
+                    <th><button onclick="visitRoom();">JOIN</button></th>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}
