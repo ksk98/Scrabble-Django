@@ -32,6 +32,27 @@
         }
 
         const board_table = document.getElementById("board_table");
+
+        function setBoard(letters) {
+            for (let i = 0; i < 15; i++) {
+                for (let j = 0; j < 15; j++) {
+                    board_table.rows[i].cells[j].firstChild.textContent = letters.charAt((i * 15) + j);
+                }
+            }
+        }
+
+        function getBoard() {
+            let out = "";
+
+            for (let i = 0; i < 15; i++) {
+                for (let j = 0; j < 15; j++) {
+                    out += board_table.rows[i].cells[j].firstChild.textContent;
+                }
+            }
+
+            return out;
+        }
+
         for (let i = 0; i < 15; i++) {
             const tr = document.createElement("tr");
             for (let j = 0; j < 15; j++) {
@@ -39,6 +60,7 @@
                 const btn = document.createElement("button");
                 btn.style.width = "100%";
                 btn.style.height = "100%";
+                btn.style.fontSize = "25px";
                 td.appendChild(btn);
                 tr.appendChild(td);
             }
@@ -50,16 +72,28 @@
     <!-- Letters -->
     <div id="div_letters" style="margin:auto; width: 50%; padding-top: 20px;">
     <style>
-        table.board {table-layout:fixed; width:400px; height:50px;}
-        table.board td {width:50px; height:50px;}
+        table.letters {table-layout:fixed; width:400px; height:50px; border: 1px solid;}
+        table.letters td {width:50px; height:50px;}
     </style>
     <table class="letters" id="letters_table"></table>
 
     <script>
         const letters_table = document.getElementById("letters_table");
+        const tr = document.createElement("tr");
+        for (let i = 0; i < 8; i++) {
+            const td = document.createElement("td");
+            const btn = document.createElement("button");
+            btn.style.width = "100%";
+            btn.style.height = "100%";
+            btn.style.fontSize = "25px";
+            td.appendChild(btn);
+            tr.appendChild(td);
+        }
+        letters_table.appendChild(tr);
 
-        function getLetterSlot() {
-
+        function putLetterInSlot(x, letter) {
+            const table = document.getElementById('letters_table');
+            table.rows[0].cells[x].firstChild.textContent = letter;
         }
 
         function addLetters(letters) {
@@ -68,7 +102,8 @@
                 if (index >= letters.length)
                     break;
 
-
+                putLetterInSlot(index, letters.charAt(i))
+                index += 1;
             }
         }
 
@@ -79,9 +114,15 @@
     </body>
 
     <script>
+        // IO control
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (data.message + '\n');
+            if (data.operation === "set_letters") {
+                addLetters(data.letters);
+            } else if (data.operation === "set_board") {
+                setBoard(data.board);
+            }
+            {#document.querySelector('#chat-log').value += (data.message + '\n');#}
         }
     </script>
 </html>
