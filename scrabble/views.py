@@ -7,7 +7,9 @@ from scrabble.forms import RegistrationForm
 from scrabble.models import Room
 
 
-def home(request):
+def index(request):
+    if request.user.is_authenticated:
+        return redirect("/lobby")
     return redirect("/login")
 
 
@@ -45,10 +47,9 @@ def login_request(request):
 
 def logout_request(request):
     if request.user.is_authenticated:
-        messages.info(request, "You are already logged in!")
-        return redirect("/")
-    logout(request)
-    messages.info(request, "You have successfully logged out.")
+        logout(request)
+        messages.info(request, "You have successfully logged out.")
+
     return redirect("/")
 
 
@@ -67,7 +68,7 @@ def room(request, room_id):
         return redirect("/login")
 
     if Room.objects.get(id=room_id).join(request.user):
-        return render(request=request, template_name="room.html")
+        return render(request=request, template_name="room.html", context={"room_id": room_id})
     else:
         return redirect("/lobby")
 
@@ -77,7 +78,9 @@ def create_room(request):
         messages.info(request, "Please log in first.")
         return redirect("/login")
 
-    room_name = request.GET.get('room_name', 'Room')
+    room_name = request.GET.get("room_name")
+    if room_name == "":
+        room_name = "Room"
 
     new_room = Room.objects.create(name=room_name)
     return redirect("/room/" + str(new_room.id) + "/")

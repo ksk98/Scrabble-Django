@@ -9,17 +9,79 @@
     </head>
 
     <body>
+    <script>
+        const room_id = "{{ room_id }}";
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/scrabble/' + room_id + '/'
+        );
+    </script>
+
     <!-- Board -->
+    <div id="div_board" style="margin:auto; width: 50%; padding-top: 20px;">
     <style>
-        table.board {table-layout:fixed; width:750px;}
-        table.board td {width:50px;}
+        table.board {table-layout:fixed; width:750px; height:750px;}
+        table.board td {width:50px; height:50px;}
     </style>
+    <table class="board" id="board_table"></table>
 
-    <table class="board">
+    <script>
+        // button.textContent for text of button
+        function getButtonFor(x, y) {
+            const table = document.getElementById('board_table');
+            return table.rows[y].cells[x].innerHTML;
+        }
 
-    </table>
+        const board_table = document.getElementById("board_table");
+        for (let i = 0; i < 15; i++) {
+            const tr = document.createElement("tr");
+            for (let j = 0; j < 15; j++) {
+                const td = document.createElement("td");
+                const btn = document.createElement("button");
+                btn.style.width = "100%";
+                btn.style.height = "100%";
+                td.appendChild(btn);
+                tr.appendChild(td);
+            }
+            board_table.appendChild(tr);
+        }
+    </script>
+    </div>
+
     <!-- Letters -->
+    <div id="div_letters" style="margin:auto; width: 50%; padding-top: 20px;">
+    <style>
+        table.board {table-layout:fixed; width:400px; height:50px;}
+        table.board td {width:50px; height:50px;}
+    </style>
+    <table class="letters" id="letters_table"></table>
+
+    <script>
+        const letters_table = document.getElementById("letters_table");
+
+        function getLetterSlot() {
+
+        }
+
+        function addLetters(letters) {
+            let index = 0
+            for (let i = 0; i < letters.length; i++) {
+                if (index >= letters.length)
+                    break;
+
+
+            }
+        }
+
+    </script>
+    </div>
 
     <!-- Buttons -->
     </body>
+
+    <script>
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#chat-log').value += (data.message + '\n');
+        }
+    </script>
 </html>
