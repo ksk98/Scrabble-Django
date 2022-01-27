@@ -1,0 +1,4 @@
+run redis
+run server
+??
+profit

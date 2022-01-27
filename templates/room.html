@@ -217,6 +217,47 @@
     </div>
 
     <!-- Buttons -->
+    <div id="div-buttons" style="margin:auto; width: 50%; padding-top: 20px;">
+        <style>
+            table {float: left;}
+            table.letters {table-layout:fixed; width:400px; height:50px; border: 1px solid;}
+            table.letters td {width:50px; height:50px;}
+            table.turn_indicator {table-layout:fixed; width:100px; height:50px; border: 1px solid;}
+        </style>
+
+        <table class="turn_indicator" id="turn_indicator">
+            <tr>
+                <td><input type="button" id="button-accept" onclick="accept()"></td>
+                <td><input type="button" id="button-pass" onclick="pass()"></td>
+            </tr>
+        </table>
+
+        <script>
+            function accept() {
+                const out = []
+
+                for (const letter_id in letters_on_board) {
+                    const record = {};
+                    const field = document.getElementById(letter_id);
+
+                    record["x"] = getXOf(field);
+                    record["y"] = getYOf(field);
+                    record["value"] = field.textContent;
+                }
+
+                chatSocket.send(JSON.stringify({
+                    "operation": "accept",
+                    "data": JSON.stringify(out)
+                }))
+            }
+
+            function pass() {
+                chatSocket.send(JSON.stringify({
+                    "operation": "pass"
+                }))
+            }
+        </script>
+    </div>
     </body>
 
     <script>

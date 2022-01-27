@@ -1,4 +1,5 @@
 import json
+import math
 
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
@@ -30,7 +31,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             if await sync_to_async(room_instance.is_in_progress)():
                 await self.send_letters_and_turn_for_player()
             else:
-                await sync_to_async(room_instance.set_progress)(True)
+                await sync_to_async(room_instance.set_in_progress)(True)
                 await self.send_new_letters()
                 await self.start_game()
             await self.send_board()
@@ -50,6 +51,64 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
         if action == "request_letters":
             await self.send_new_letters()
+        elif action == "accept":
+            if self.verify_word(text_data_json['data']):
+                # calculate and add points
+                # add to board
+                # broadcast board
+                # switch turns
+                pass
+        elif action == "pass":
+            await self.switch_turn()
+
+    async def verify_word(self, event):
+        # validate if new letters are in straight line
+        new_letters = event['data']
+        if len(new_letters) > 1:
+            if new_letters[0]["x"] == new_letters[1]["x"]:
+                param_name = "x"
+            elif new_letters[0]["y"] == new_letters[1]["y"]:
+                param_name = "y"
+            else:
+                return False
+
+            value = new_letters[0][param_name]
+            for letter in new_letters:
+                if letter[param_name] != value:
+                    return False
+
+        room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
+        board = self.array_of_board(room_instance.board, room_instance.size)
+
+        # if board is empty the new word has to touch the middle tile
+        if room_instance.board == len(room_instance.board) * room_instance.board[0]:
+            middle = math.floor(room_instance.size/2) # 7 for 15x15
+
+            goes_trough_middle = False
+            for letter in new_letters:
+                if letter["x"] == middle and letter["y"] == middle:
+                    goes_trough_middle = True
+                    break
+
+            if not goes_trough_middle:
+                return False
+
+        # add letters to new board while determining if the new letters are in straight line
+
+        # validate every new word created by the change
+
+        return True
+
+    @staticmethod
+    async def array_of_board(board_string: str, border_size):
+        out = []
+
+        for i in range(border_size):
+            out[i] = []
+            for j in range(border_size):
+                out[i][j] = board_string[(i*border_size) + j]
+
+        return out
 
     async def set_letters(self, event):
         target = event['user_id']

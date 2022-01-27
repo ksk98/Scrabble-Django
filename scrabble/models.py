@@ -16,6 +16,8 @@ class Room(models.Model):
     name = models.TextField()
     player1 = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name="p1")
     player2 = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name="p2")
+    player1_points = models.IntegerField(default=0)
+    player2_points = models.IntegerField(default=0)
 
     letters = models.TextField(default="")
     player1_letters = models.TextField(default="")
@@ -56,8 +58,15 @@ class Room(models.Model):
         else:
             return not self.player1_turn
 
-    def set_progress(self, progress):
+    def set_in_progress(self, progress):
         self.in_progress = progress
+        self.save()
+
+    def add_points(self, player, points):
+        if self.player1 == player:
+            self.player1_points += points
+        elif self.player2 == player:
+            self.player2_points += points
         self.save()
 
     def toggle_turn(self):
