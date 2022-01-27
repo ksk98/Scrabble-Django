@@ -20,11 +20,18 @@ class Room(models.Model):
     letters = models.TextField(default="")
     player1_letters = models.TextField(default="")
     player2_letters = models.TextField(default="")
+    player1_turn = models.BooleanField(default=True)
 
     board = models.TextField(default="")
     size = models.IntegerField(default=15)
 
     in_progress = models.BooleanField(default=False)
+
+    def get_player_1(self):
+        return self.player1
+
+    def get_player_2(self):
+        return self.player2
 
     def get_player_1_id(self):
         return self.player1.id
@@ -43,6 +50,20 @@ class Room(models.Model):
     def get_board(self):
         return self.board
 
+    def get_player_turn(self, player):
+        if self.player1 == player:
+            return self.player1_turn
+        else:
+            return not self.player1_turn
+
+    def set_progress(self, progress):
+        self.in_progress = progress
+        self.save()
+
+    def toggle_turn(self):
+        self.player1_turn = not self.player1_turn
+        self.save()
+
     def join(self, user):
         if self.player1 == user or self.player2 == user:
             return True
@@ -57,7 +78,7 @@ class Room(models.Model):
         if self.player1 is not None and self.player2 is not None:
             self.reset_board()
             self.reset_letters()
-            self.in_progress = True
+            self.player1_turn = random.getrandbits(1)
 
         self.save()
         return True
@@ -101,17 +122,17 @@ class Room(models.Model):
             if len(self.letters) <= 0:
                 break
 
-            p1_new += self.letters[0]
+            p1_new = p1_new + self.letters[0]
             self.letters = self.letters[1:]
-        self.player1_letters += p1_new
+        self.player1_letters = self.player1_letters + p1_new
 
         for i in range(p2_deficit):
             if len(self.letters) <= 0:
                 break
 
-            p2_new += self.letters[0]
+            p2_new = p2_new + self.letters[0]
             self.letters = self.letters[1:]
-        self.player2_letters += p2_new
+        self.player2_letters = self.player2_letters + p2_new
 
         self.save()
         return {'player_1': p1_new, 'player_2': p2_new}

@@ -1,11 +1,12 @@
 import json
 
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
 
 from scrabble.models import Room
+# from word_set import words as dictionary
 
 
 class PlayerConsumer(AsyncWebsocketConsumer):
@@ -18,7 +19,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         if not await (user.is_authenticated and sync_to_async(room_instance.join)(user)):
             return
 
-        # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -28,9 +28,11 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
         if await sync_to_async(room_instance.is_full)():
             if await sync_to_async(room_instance.is_in_progress)():
-                await self.send_letters_for_player()
+                await self.send_letters_and_turn_for_player()
             else:
+                await sync_to_async(room_instance.set_progress)(True)
                 await self.send_new_letters()
+                await self.start_game()
             await self.send_board()
 
     async def disconnect(self, close_code):
@@ -56,7 +58,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
         await self.send(text_data=json.dumps({
             'operation': event['operation'],
-            'letters': event['letters']
+            'letters': event['letters'],
+            'turn': event['turn']
         }))
 
     async def set_board(self, event):
@@ -65,7 +68,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             'board': event['board']
         }))
 
-    # Receive message from room group
     async def action(self, event):
         message = event['action']
 
@@ -87,11 +89,30 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             }
         )
 
+    async def switch_turn(self):
+        room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
+        await sync_to_async(room_instance.toggle_turn)()
+        await self.send_new_letters()
+
+    async def start_game(self):
+        await self.send(text_data=json.dumps({
+            'operation': 'game_started'
+        }))
+
+    async def stop_game(self):
+        await self.send(text_data=json.dumps({
+            'operation': 'game_stopped'
+        }))
+
     async def send_new_letters(self):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         letters = await sync_to_async(room_instance.pass_new_letters)()
+        p1 = await sync_to_async(room_instance.get_player_1)()
         p1_id = await sync_to_async(room_instance.get_player_1_id)()
+        p1_turn = await sync_to_async(room_instance.get_player_turn)(p1)
+        p2 = await sync_to_async(room_instance.get_player_2)()
         p2_id = await sync_to_async(room_instance.get_player_2_id)()
+        p2_turn = await sync_to_async(room_instance.get_player_turn)(p2)
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -99,7 +120,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 'type': 'set_letters',
                 'operation': 'set_letters',
                 'user_id': p1_id,
-                'letters': letters['player_1']
+                'letters': letters['player_1'],
+                'turn': p1_turn
             }
         )
         await self.channel_layer.group_send(
@@ -108,14 +130,17 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 'type': 'set_letters',
                 'operation': 'set_letters',
                 'user_id': p2_id,
-                'letters': letters['player_2']
+                'letters': letters['player_2'],
+                'turn': p2_turn
             }
         )
 
-    async def send_letters_for_player(self):
+    async def send_letters_and_turn_for_player(self):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         user: User = self.scope["user"]
         letters = await sync_to_async(room_instance.get_letters_for_player)(user)
+        turn = await sync_to_async(room_instance.get_player_turn)(user)
+        game_started = room_instance.in_progress
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -123,6 +148,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 'type': 'set_letters',
                 'operation': 'set_letters',
                 'user_id': user.id,
-                'letters': letters
+                'letters': letters,
+                'turn': turn,
+                'game_started': game_started
             }
         )
