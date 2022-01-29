@@ -44,7 +44,7 @@
                     const button = board_table.rows[i].cells[j].firstChild;
                     button.textContent = letter;
 
-                    if (letter !== "")
+                    if (letter !== " ")
                         button.disabled = true;
                 }
             }
@@ -94,7 +94,7 @@
             if (selected_letter != null) {
                 removeLetter(selected_letter);
 
-                if (field_button.textContent !== "") {
+                if (field_button.textContent !== " ") {
                     // Selected field is occupied
                     // Since all occupied fields that weren't occupied this turn are not clickable
                     // just put the letter back to the hand and place a new one
@@ -105,12 +105,12 @@
                 field_button.textContent = selected_letter.textContent;
                 selected_letter = null;
             } else {
-                if (field_button.textContent === "")
+                if (field_button.textContent === " ")
                     return;
 
                 // No letter is selected to place, place this letter back to the hand
                 putLetterInNextSlot(field_button.textContent)
-                field_button.textContent = "";
+                field_button.textContent = " ";
                 delete letters_on_board[field_button.id];
             }
         }
@@ -242,19 +242,23 @@
                     record["x"] = getXOf(field);
                     record["y"] = getYOf(field);
                     record["value"] = field.textContent;
+                    out.push(record)
                 }
 
                 chatSocket.send(JSON.stringify({
-                    "operation": "accept",
-                    "data": JSON.stringify(out)
+                    "action": "accept",
+                    "data": out
                 }))
             }
 
             function pass() {
                 chatSocket.send(JSON.stringify({
-                    "operation": "pass"
+                    "action": "pass"
                 }))
             }
+
+            document.getElementById("button-accept").onclick = function() { accept() }
+            document.getElementById("button-pass").onclick = function() { pass() }
         </script>
     </div>
     </body>

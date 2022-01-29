@@ -35,6 +35,9 @@ class Room(models.Model):
     def get_player_2(self):
         return self.player2
 
+    def is_empty(self):
+        return self.player1 is None and self.player2 is None
+
     def get_player_1_id(self):
         return self.player1.id
 
@@ -61,6 +64,13 @@ class Room(models.Model):
             return self.player1_turn
         else:
             return not self.player1_turn
+
+    def is_turn_of_player(self, player):
+        if (self.player1_turn and self.player1 == player) or \
+                (not self.player1_turn and self.player2 == player):
+            return True
+
+        return False
 
     def set_in_progress(self, progress):
         self.in_progress = progress
@@ -122,7 +132,7 @@ class Room(models.Model):
 
     def reset_board(self):
         self.board = ""
-        self.board.ljust(int(self.size)**2, " ")
+        self.board = self.board.ljust(int(self.size)**2, " ")
         self.save()
 
     def pass_new_letters(self):
