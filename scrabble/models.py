@@ -44,6 +44,24 @@ class Room(models.Model):
     def get_player_2_id(self):
         return self.player2.id
 
+    def remove_letters_for_current_player(self, letters):
+        # god this is ugly
+        for letter in letters:
+            if self.player1_turn:
+                for i in range(len(self.player1_letters)):
+                    if letter["value"] == self.player1_letters[i]:
+                        self.player1_letters = \
+                            self.player1_letters[0:i] + self.player1_letters[i + 1:len(self.player1_letters)]
+                        break
+            else:
+                for i in range(len(self.player2_letters)):
+                    if letter["value"] == self.player2_letters[i]:
+                        self.player2_letters = \
+                            self.player2_letters[0:i] + self.player2_letters[i + 1:len(self.player2_letters)]
+                        break
+
+        self.save()
+
     def get_letters_for_player(self, player):
         if self.player1 == player:
             return self.player1_letters

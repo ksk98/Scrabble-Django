@@ -3,7 +3,7 @@ from scrabble.word_set import words as dictionary
 
 def creates_valid_word(board: list[list[str]], start_x: int, start_y: int, axis_is_x: bool) -> bool:
     current_pos = get_starting_pos_of_word(board, start_x, start_y, axis_is_x)
-    print(current_pos)
+    print("current_pos: " + str(current_pos))
     word = []
 
     if axis_is_x:
@@ -12,7 +12,7 @@ def creates_valid_word(board: list[list[str]], start_x: int, start_y: int, axis_
         ind = 1
 
     while current_pos[ind] < len(board):
-        letter = board[current_pos[0]][current_pos[1]]
+        letter = board[current_pos[1]][current_pos[0]]
 
         if letter != " ":
             print(letter)
@@ -22,7 +22,7 @@ def creates_valid_word(board: list[list[str]], start_x: int, start_y: int, axis_
 
         current_pos[ind] += 1
 
-    full_word = "".join(word)
+    full_word = ("".join(word)).lower()
     print("word: " + full_word)
 
     if len(full_word) == 1:
@@ -33,19 +33,17 @@ def creates_valid_word(board: list[list[str]], start_x: int, start_y: int, axis_
 
 def get_starting_pos_of_word(board: list[list[str]], start_x: int, start_y: int, axis_is_x: bool) -> [int, int]:
     current_pos = [start_x, start_y]
-    print(current_pos)
-    print(axis_is_x)
 
     if axis_is_x:
         while current_pos[0] > 0:
-            if board[current_pos[0] - 1][current_pos[1]] != " ":
-                current_pos[0] -= 1
+            if board[current_pos[0]][current_pos[1] - 1] != " ":
+                current_pos[1] -= 1
             else:
                 break
     else:
         while current_pos[1] > 0:
-            if board[current_pos[0]][current_pos[1 - 1]] != " ":
-                current_pos[1] -= 1
+            if board[current_pos[0] - 1][current_pos[1]] != " ":
+                current_pos[0] -= 1
             else:
                 break
 

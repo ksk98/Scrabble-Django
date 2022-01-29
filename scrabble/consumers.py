@@ -63,6 +63,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
             if await self.verify_word_and_update_board(text_data_json['data']):
                 # TODO: calculate and add points
+                await self.send_new_letters()
                 await self.send_board()
                 await self.switch_turn()
         elif action == "pass":
@@ -80,36 +81,42 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             else:
                 return 1
 
-        new_letters = sorted(new_letters, key=cmp_to_key(compare))
-        print(new_letters)
+        new_letters_sorted = sorted(new_letters, key=cmp_to_key(compare))
 
         # validate if new letters are in straight line, what is the direction of the word
         word_direction_axis = "x"
-        if len(new_letters) > 1:
-            print(str(new_letters[0]["x"]) + " " + str(new_letters[1]["x"]))
-            print(str(new_letters[0]["y"]) + " " + str(new_letters[1]["y"]))
-            if new_letters[0]["x"] == new_letters[1]["x"]:
-                word_direction_axis = "x"
-            elif new_letters[0]["y"] == new_letters[1]["y"]:
+        if len(new_letters_sorted) > 1:
+            if new_letters_sorted[0]["x"] == new_letters_sorted[1]["x"]:
                 word_direction_axis = "y"
+
+                value = new_letters_sorted[0]["x"]
+                for letter in new_letters_sorted:
+                    print("not straight1")
+                    if letter["x"] != value:
+                        return False
+            elif new_letters_sorted[0]["y"] == new_letters_sorted[1]["y"]:
+                word_direction_axis = "x"
+
+                value = new_letters_sorted[0]["y"]
+                for letter in new_letters_sorted:
+                    print("not straight2")
+                    if letter["y"] != value:
+                        return False
             else:
+                print("not straight3")
                 return False
 
-            value = new_letters[0][word_direction_axis]
-            for letter in new_letters:
-                if letter[word_direction_axis] != value:
-                    return False
+        print("straight line ok, axis: " + word_direction_axis)
 
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         board = await self.array_of_board(room_instance.board, room_instance.size)
 
-        print("straight line ok, axis: " + word_direction_axis)
         # if board is empty the new word has to touch the middle tile
         if room_instance.board == len(room_instance.board) * room_instance.board[0]:
             middle = math.floor(room_instance.size/2)   # 7 for 15x15
 
             goes_trough_middle = False
-            for letter in new_letters:
+            for letter in new_letters_sorted:
                 if letter["x"] == middle and letter["y"] == middle:
                     goes_trough_middle = True
                     break
@@ -119,7 +126,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
         print("middle tile ok")
         # add letters to new board, verify if new letters don't overlap with existing letters
-        for letter in new_letters:
+        for letter in new_letters_sorted:
             if board[letter["y"]][letter["x"]] != " ":
                 return False
 
@@ -128,18 +135,18 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         print("overlap ok")
         # validate every new word created by the change
         if not algorithms.creates_valid_word(
-                board, new_letters[0]["x"], new_letters[0]["y"], word_direction_axis == "x"):
+                board, new_letters_sorted[0]["x"], new_letters_sorted[0]["y"], word_direction_axis == "x"):
             return False
 
         print("first word ok")
 
-        for letter in new_letters:
+        for letter in new_letters_sorted:
             if not algorithms.creates_valid_word(board, letter["x"], letter["y"], word_direction_axis != "x"):
                 return False
             print("word ok")
 
         await sync_to_async(room_instance.set_board)(algorithms.board_to_string(board))
-        print(algorithms.board_to_string(board))
+        await sync_to_async(room_instance.remove_letters_for_current_player)(new_letters_sorted)
         return True
 
     @staticmethod
