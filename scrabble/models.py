@@ -52,6 +52,10 @@ class Room(models.Model):
     def get_board(self):
         return self.board
 
+    def set_board(self, value):
+        self.board = value
+        self.save()
+
     def get_player_turn(self, player):
         if self.player1 == player:
             return self.player1_turn

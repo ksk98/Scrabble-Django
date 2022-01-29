@@ -1,13 +1,13 @@
 import json
 import math
 
+import scrabble.algorithm as algorithms
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
 
 from scrabble.models import Room
-# from word_set import words as dictionary
 
 
 class PlayerConsumer(AsyncWebsocketConsumer):
@@ -52,37 +52,35 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         if action == "request_letters":
             await self.send_new_letters()
         elif action == "accept":
-            if self.verify_word(text_data_json['data']):
-                # calculate and add points
-                # add to board
-                # broadcast board
-                # switch turns
+            if self.verify_word_and_update_board(text_data_json['data']):
+                # TODO: calculate and add points
+                await self.send_board()
                 pass
-        elif action == "pass":
-            await self.switch_turn()
+        await self.switch_turn()
 
-    async def verify_word(self, event):
-        # validate if new letters are in straight line
+    async def verify_word_and_update_board(self, event):
+        # validate if new letters are in straight line, what is the direction of the word
         new_letters = event['data']
+        word_direction_axis = "x"
         if len(new_letters) > 1:
             if new_letters[0]["x"] == new_letters[1]["x"]:
-                param_name = "x"
+                word_direction_axis = "x"
             elif new_letters[0]["y"] == new_letters[1]["y"]:
-                param_name = "y"
+                word_direction_axis = "y"
             else:
                 return False
 
-            value = new_letters[0][param_name]
+            value = new_letters[0][word_direction_axis]
             for letter in new_letters:
-                if letter[param_name] != value:
+                if letter[word_direction_axis] != value:
                     return False
 
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
-        board = self.array_of_board(room_instance.board, room_instance.size)
+        board = await self.array_of_board(room_instance.board, room_instance.size)
 
         # if board is empty the new word has to touch the middle tile
         if room_instance.board == len(room_instance.board) * room_instance.board[0]:
-            middle = math.floor(room_instance.size/2) # 7 for 15x15
+            middle = math.floor(room_instance.size/2)   # 7 for 15x15
 
             goes_trough_middle = False
             for letter in new_letters:
@@ -93,10 +91,23 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             if not goes_trough_middle:
                 return False
 
-        # add letters to new board while determining if the new letters are in straight line
+        # add letters to new board, verify if new letters don't overlap with existing letters
+        for letter in new_letters:
+            if board[letter["y"]][letter["x"]] != "":
+                return False
+
+            board[letter["y"]][letter["x"]] = letter["value"]
 
         # validate every new word created by the change
+        if not algorithms.creates_valid_word(
+                board, new_letters[0]["x"], new_letters[0]["y"], word_direction_axis == "x"):
+            return False
 
+        for letter in new_letters:
+            if not algorithms.creates_valid_word(board, letter["x"], letter["y"], word_direction_axis != "x"):
+                return False
+
+        await sync_to_async(room_instance.set_board)(algorithms.board_to_string(board))
         return True
 
     @staticmethod

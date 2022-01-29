@@ -74,7 +74,7 @@
             if (!my_turn)
                 return
 
-            if (Object.keys(letters_on_board).length > 1) {
+            if (Object.keys(letters_on_board).length > 0) {
                 // Letters can only be placed in a straight line
                 let xGood = true;
                 let yGood = true;
@@ -95,7 +95,6 @@
                 removeLetter(selected_letter);
 
                 if (field_button.textContent !== "") {
-                    console.log("field_button.textContent = " + field_button.textContent)
                     // Selected field is occupied
                     // Since all occupied fields that weren't occupied this turn are not clickable
                     // just put the letter back to the hand and place a new one
@@ -227,8 +226,8 @@
 
         <table class="turn_indicator" id="turn_indicator">
             <tr>
-                <td><input type="button" id="button-accept" onclick="accept()"></td>
-                <td><input type="button" id="button-pass" onclick="pass()"></td>
+                <td><input type="button" id="button-accept" onclick="accept()" value="accept"></td>
+                <td><input type="button" id="button-pass" onclick="pass()" value="pass"></td>
             </tr>
         </table>
 
