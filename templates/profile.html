@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load crispy_forms_filters %}
+
+{% block head %}
+  <title>Scrabble</title>
+{% endblock %}
+
+{% block content %}
+    <table>
+        <tr>
+            <td>NAME</td> <td>{{ username }}</td>
+        </tr>
+        <tr>
+            <td>WINS</td> <td>{{ wins }}</td>
+        </tr>
+        <tr>
+            <td>LOSES</td> <td>{{ loses }}</td>
+        </tr>
+        <tr>
+            <td>SCORE</td> <td>{{ points }}</td>
+        </tr>
+    </table>
+{% endblock %}

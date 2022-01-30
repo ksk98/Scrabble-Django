@@ -60,7 +60,7 @@ def lobby(request):
         messages.info(request, "Please log in first.")
         return redirect("/login")
 
-    rooms = list(Room.objects.all())
+    rooms = Room.objects.all().filter(finished__exact=False)
     return render(request=request, template_name="lobby.html", context={"rooms": rooms})
 
 

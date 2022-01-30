@@ -29,6 +29,7 @@ class Room(models.Model):
 
     in_progress = models.BooleanField(default=False)
     pass_counter = models.IntegerField(default=0)
+    finished = models.BooleanField(default=False)
 
     def get_player_1(self):
         return self.player1
@@ -38,6 +39,10 @@ class Room(models.Model):
 
     def is_empty(self):
         return self.player1 is None and self.player2 is None
+
+    def finish(self):
+        self.finished = True
+        self.save()
 
     def get_player_1_id(self):
         return self.player1.id
@@ -128,6 +133,9 @@ class Room(models.Model):
         self.save()
 
     def join(self, user):
+        if self.finished:
+            return False
+
         if self.player1 == user or self.player2 == user:
             return True
 

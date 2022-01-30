@@ -49,6 +49,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
         if await sync_to_async(room_instance.is_empty)():
             await sync_to_async(room_instance.delete)()
+        else:
+            await self.finish_game()
 
     async def receive(self, text_data):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
@@ -278,6 +280,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             winner_out = "DRAW"
         else:
             winner_out = winner.username
+
+        await sync_to_async(room_instance.finish)()
 
         await self.send(text_data=json.dumps({
             'operation': 'game_stopped',
