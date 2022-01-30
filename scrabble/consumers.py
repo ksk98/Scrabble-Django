@@ -276,10 +276,15 @@ class PlayerConsumer(AsyncWebsocketConsumer):
     async def finish_game(self):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         winner: User = await sync_to_async(room_instance.get_winner)()
-        if User is None:
+        if winner is None:
             winner_out = "DRAW"
         else:
             winner_out = winner.username
+
+        p1 = await sync_to_async(room_instance.get_player_1)()
+        p2 = await sync_to_async(room_instance.get_player_2)()
+        await self.reward_player(p1, winner == p1, room_instance.player1_points)
+        await self.reward_player(p2, winner == p2, room_instance.player2_points)
 
         await sync_to_async(room_instance.finish)()
 

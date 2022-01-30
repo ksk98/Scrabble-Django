@@ -19,10 +19,10 @@
                 {% if user.is_authenticated %}
 
                 <li class="nav-item">
-                    <a class="nav-link" href="/logout">Logout</a>
+                    <a class="nav-link" href="#">Welcome, {{user.username}}</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Welcome, {{user.username}}</a>
+                    <a class="nav-link" href="/logout">Logout</a>
                 </li>
 
                 {% else %}
@@ -33,10 +33,13 @@
 
                 {% endif %}
                 <li class="nav-item">
-                    <a class="nav-link" href="/profile.html">profile</a>
+                    <a class="nav-link" href="/profile">profile</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/high_scores.html">high scores</a>
+                    <a class="nav-link" href="/high_scores">high scores</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/lobby">lobby</a>
                 </li>
             </ul>
         </div>
