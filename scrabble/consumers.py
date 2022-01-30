@@ -111,15 +111,45 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         board = await self.array_of_board(room_instance.board, room_instance.size)
 
-        # all the letters should connect
+        # all the letters should connect to at least one other letter
         # also check if the words is built on another word which is used later
         connected_to_other_word = False
+        current_pos = algorithms.get_starting_pos_of_word(
+            board, new_letters_sorted[0]["x"], new_letters_sorted[0]["y"], word_direction_axis == "x")
+        print(current_pos)
+        ind = 0
         if word_direction_axis == "x":
-            current_pos = [new_letters_sorted[0]["x"], new_letters_sorted[0]["y"]]
-            ind = 0
-            while current_pos[0] < room_instance.size and ind < len(new_letters_sorted):
-
-
+            while current_pos[0] < room_instance.size:
+                if ind < len(new_letters_sorted) and \
+                        current_pos[0] == new_letters_sorted[ind]["x"] and \
+                        current_pos[1] == new_letters_sorted[ind]["y"]:
+                    current_pos[0] += 1
+                    ind += 1
+                else:
+                    if board[current_pos[1]][current_pos[0]] == " ":
+                        if ind < len(new_letters_sorted):
+                            return False
+                        else:
+                            break
+                    else:
+                        connected_to_other_word = True
+                    current_pos[0] += 1
+        else:
+            while current_pos[1] < room_instance.size:
+                if ind < len(new_letters_sorted) and \
+                        current_pos[0] == new_letters_sorted[ind]["x"] and \
+                        current_pos[1] == new_letters_sorted[ind]["y"]:
+                    current_pos[1] += 1
+                    ind += 1
+                else:
+                    if board[current_pos[1]][current_pos[0]] == " ":
+                        if ind < len(new_letters_sorted):
+                            return False
+                        else:
+                            break
+                    else:
+                        connected_to_other_word = True
+                    current_pos[1] += 1
 
         # if board is empty the new word has to touch the middle tile
         board_empty = room_instance.board == len(room_instance.board) * room_instance.board[0]
