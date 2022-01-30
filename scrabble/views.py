@@ -1,10 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
+from django.db.models import Count
 from django.shortcuts import redirect, render
 
+from scrabble import profile_manager
 from scrabble.forms import RegistrationForm
-from scrabble.models import Room
+from scrabble.models import Room, UserProfile
 
 
 def index(request):
@@ -84,3 +86,26 @@ def create_room(request):
 
     new_room = Room.objects.create(name=room_name)
     return redirect("/room/" + str(new_room.id) + "/")
+
+
+def profile(request):
+    if not request.user.is_authenticated:
+        messages.info(request, "Please log in first.")
+        return redirect("/login")
+
+    user_profile: UserProfile = profile_manager.get_profile_for(request.user)
+    return render(request=request, template_name="profile.html", context={
+        "username": request.user.username,
+        "wins": user_profile.wins,
+        "loses": user_profile.loses,
+        "points": user_profile.totalScore
+    })
+
+
+def high_scores(request):
+    top_points = UserProfile.objects.values('totalScore').order_by('-totalScore')[:10]
+    top_wins = UserProfile.objects.values('wins').order_by('-wins')[:10]
+    return render(request=request, template_name="high_scores.html", context={
+        "top_points": top_points,
+        "top_wins": top_wins
+    })

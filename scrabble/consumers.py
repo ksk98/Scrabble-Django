@@ -8,7 +8,8 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
 
-from scrabble.models import Room
+from scrabble import profile_manager
+from scrabble.models import Room, UserProfile
 
 
 class PlayerConsumer(AsyncWebsocketConsumer):
@@ -271,9 +272,29 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         }))
 
     async def finish_game(self):
+        room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
+        winner: User = await sync_to_async(room_instance.get_winner)()
+        if User is None:
+            winner_out = "DRAW"
+        else:
+            winner_out = winner.username
+
         await self.send(text_data=json.dumps({
-            'operation': 'game_stopped'
+            'operation': 'game_stopped',
+            'winner': winner_out
         }))
+
+    @staticmethod
+    async def reward_player(user: User, round_won: bool, points: int):
+
+        profile: UserProfile = await sync_to_async(profile_manager.get_profile_for)(user)
+        if round_won:
+            profile.wins += 1
+        else:
+            profile.loses += 1
+
+        profile.totalScore += points
+        await database_sync_to_async(profile.save)()
 
     async def send_new_letters(self):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)

@@ -45,6 +45,14 @@ class Room(models.Model):
     def get_player_2_id(self):
         return self.player2.id
 
+    def get_winner(self):
+        if self.player1_points > self.player2_points:
+            return self.player1
+        elif self.player1_points < self.player2_points:
+            return self.player2
+        else:
+            return None
+
     def add_points_to_current_player(self, value):
         if self.player1_turn:
             self.player1_points += value

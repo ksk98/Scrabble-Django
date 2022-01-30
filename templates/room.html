@@ -277,6 +277,12 @@
                 game_in_progress = true;
             } else if (data.operation === "game_stopped") {
                 game_in_progress = false;
+                my_turn = false
+
+                if (data.winner === "DRAW")
+                    alert("DRAW")
+                else
+                    alert("WINNER: " + data.winner)
                 // TODO: ANNOUNCE WINNER
             }
             {#document.querySelector('#chat-log').value += (data.message + '\n');#}
