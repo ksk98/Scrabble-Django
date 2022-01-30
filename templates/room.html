@@ -270,6 +270,7 @@
             if (data.operation === "set_letters") {
                 addLetters(data.letters);
                 indicateTurn(data.turn)
+                letters_on_board = {}
             } else if (data.operation === "set_board") {
                 setBoard(data.board);
             } else if (data.operation === "game_started") {

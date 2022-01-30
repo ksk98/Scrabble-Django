@@ -91,16 +91,16 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
                 value = new_letters_sorted[0]["x"]
                 for letter in new_letters_sorted:
-                    print("not straight1")
                     if letter["x"] != value:
+                        print("not straight1")
                         return False
             elif new_letters_sorted[0]["y"] == new_letters_sorted[1]["y"]:
                 word_direction_axis = "x"
 
                 value = new_letters_sorted[0]["y"]
                 for letter in new_letters_sorted:
-                    print("not straight2")
                     if letter["y"] != value:
+                        print("not straight2")
                         return False
             else:
                 print("not straight3")
@@ -111,8 +111,19 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         board = await self.array_of_board(room_instance.board, room_instance.size)
 
+        # all the letters should connect
+        # also check if the words is built on another word which is used later
+        connected_to_other_word = False
+        if word_direction_axis == "x":
+            current_pos = [new_letters_sorted[0]["x"], new_letters_sorted[0]["y"]]
+            ind = 0
+            while current_pos[0] < room_instance.size and ind < len(new_letters_sorted):
+
+
+
         # if board is empty the new word has to touch the middle tile
-        if room_instance.board == len(room_instance.board) * room_instance.board[0]:
+        board_empty = room_instance.board == len(room_instance.board) * room_instance.board[0]
+        if board_empty:
             middle = math.floor(room_instance.size/2)   # 7 for 15x15
 
             goes_trough_middle = False
@@ -135,15 +146,24 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         print("overlap ok")
         # validate every new word created by the change
         if not algorithms.creates_valid_word(
-                board, new_letters_sorted[0]["x"], new_letters_sorted[0]["y"], word_direction_axis == "x"):
+                board, new_letters_sorted[0]["x"], new_letters_sorted[0]["y"], word_direction_axis == "x")[0]:
             return False
 
         print("first word ok")
 
+        # if board is not empty, the new word has to connect to some other word
         for letter in new_letters_sorted:
-            if not algorithms.creates_valid_word(board, letter["x"], letter["y"], word_direction_axis != "x"):
+            valid_word = algorithms.creates_valid_word(board, letter["x"], letter["y"], word_direction_axis != "x")
+            if not valid_word[0]:
                 return False
+            if valid_word[1] > 1:
+                connected_to_other_word = True
             print("word ok")
+
+        if not board_empty:
+            if not connected_to_other_word:
+                return False
+        print("connects to other word or first word")
 
         await sync_to_async(room_instance.set_board)(algorithms.board_to_string(board))
         await sync_to_async(room_instance.remove_letters_for_current_player)(new_letters_sorted)
