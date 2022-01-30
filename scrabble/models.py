@@ -28,6 +28,7 @@ class Room(models.Model):
     size = models.IntegerField(default=15)
 
     in_progress = models.BooleanField(default=False)
+    pass_counter = models.IntegerField(default=0)
 
     def get_player_1(self):
         return self.player1
@@ -44,8 +45,15 @@ class Room(models.Model):
     def get_player_2_id(self):
         return self.player2.id
 
+    def add_points_to_current_player(self, value):
+        if self.player1_turn:
+            self.player1_points += value
+        else:
+            self.player2_points += value
+
+        self.save()
+
     def remove_letters_for_current_player(self, letters):
-        # god this is ugly
         for letter in letters:
             if self.player1_turn:
                 for i in range(len(self.player1_letters)):
@@ -101,8 +109,14 @@ class Room(models.Model):
             self.player2_points += points
         self.save()
 
-    def toggle_turn(self):
+    def toggle_turn(self, turn_passed=False):
         self.player1_turn = not self.player1_turn
+
+        if turn_passed:
+            self.pass_counter += 1
+        else:
+            self.pass_counter = 0
+
         self.save()
 
     def join(self, user):

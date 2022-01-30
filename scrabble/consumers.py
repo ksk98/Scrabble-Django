@@ -70,7 +70,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             if not await sync_to_async(room_instance.is_turn_of_player)(user):
                 return
 
-            await self.switch_turn()
+            await self.switch_turn(True)
 
     async def verify_word_and_update_board(self, new_letters):
         def compare(a, b):
@@ -174,11 +174,14 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             board[letter["y"]][letter["x"]] = letter["value"]
 
         print("overlap ok")
+        points = 0
         # validate every new word created by the change
-        if not algorithms.creates_valid_word(
-                board, new_letters_sorted[0]["x"], new_letters_sorted[0]["y"], word_direction_axis == "x")[0]:
+        creates_valid_word = algorithms.creates_valid_word(
+                board, new_letters_sorted[0]["x"], new_letters_sorted[0]["y"], word_direction_axis == "x")
+        if not creates_valid_word[0]:
             return False
 
+        points += creates_valid_word[2]
         print("first word ok")
 
         # if board is not empty, the new word has to connect to some other word
@@ -188,6 +191,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 return False
             if valid_word[1] > 1:
                 connected_to_other_word = True
+
+            points += valid_word[2]
             print("word ok")
 
         if not board_empty:
@@ -197,6 +202,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
         await sync_to_async(room_instance.set_board)(algorithms.board_to_string(board))
         await sync_to_async(room_instance.remove_letters_for_current_player)(new_letters_sorted)
+        await sync_to_async(room_instance.add_points_to_current_player)(points)
         return True
 
     @staticmethod
@@ -248,9 +254,15 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    async def switch_turn(self):
+    async def switch_turn(self, turn_passed=False):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
-        await sync_to_async(room_instance.toggle_turn)()
+        await sync_to_async(room_instance.toggle_turn)(turn_passed)
+
+        room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
+        if room_instance.pass_counter >= 3:
+            await self.finish_game()
+            return
+
         await self.send_new_letters()
 
     async def start_game(self):
@@ -258,7 +270,7 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             'operation': 'game_started'
         }))
 
-    async def stop_game(self):
+    async def finish_game(self):
         await self.send(text_data=json.dumps({
             'operation': 'game_stopped'
         }))
@@ -266,6 +278,11 @@ class PlayerConsumer(AsyncWebsocketConsumer):
     async def send_new_letters(self):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         letters = await sync_to_async(room_instance.pass_new_letters)()
+
+        if len(letters['player_1']) == 0 or len(letters['player_2']) == 0:
+            await self.finish_game()
+            return
+
         p1 = await sync_to_async(room_instance.get_player_1)()
         p1_id = await sync_to_async(room_instance.get_player_1_id)()
         p1_turn = await sync_to_async(room_instance.get_player_turn)(p1)
