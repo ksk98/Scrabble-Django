@@ -1,4 +1,7 @@
-run redis
-run server
-??
-profit
+1. Create a Redis server in a Docker container
+    * docker run -p 6379:6379 -d redis:5
+
+2. Run django server
+    * python3 manage.py runserver
+
+3. Connect to the application via http://127.0.0.1:8000/
