@@ -7,262 +7,261 @@
               integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <title>Scrabble</title>
     </head>
-
     <body>
-    <script>
-        let game_in_progress = false;
-        let my_turn = false;
-        let letters_on_board = {};
-        let selected_letter = null;
-        const room_id = "{{ room_id }}";
-        const chatSocket = new WebSocket(
-            'ws://' + window.location.host + '/ws/scrabble/' + room_id + '/'
-        );
-    </script>
+    <div style="margin:auto; padding-top: 20px; width:750px;">
+        <script>
+            let game_in_progress = false;
+            let my_turn = false;
+            let letters_on_board = {};
+            let selected_letter = null;
+            const room_id = "{{ room_id }}";
+            const chatSocket = new WebSocket(
+                'ws://' + window.location.host + '/ws/scrabble/' + room_id + '/'
+            );
+        </script>
 
-    <!-- Board -->
-    <div id="div_board" style="margin:auto; width: 50%; padding-top: 20px;">
-    <style>
-        table.board {table-layout:fixed; width:750px; height:750px;}
-        table.board td {width:50px; height:50px;}
-    </style>
-    <table class="board" id="board_table"></table>
-
-    <script>
-        // button.textContent for text of button
-        function getButtonFor(x, y) {
-            const table = document.getElementById('board_table');
-            return table.rows[y].cells[x].innerHTML;
-        }
-
-        const board_table = document.getElementById("board_table");
-
-        function setBoard(letters) {
-            for (let i = 0; i < 15; i++) {
-                for (let j = 0; j < 15; j++) {
-                    const letter = letters.charAt((i * 15) + j)
-                    const button = board_table.rows[i].cells[j].firstChild;
-                    button.textContent = letter;
-
-                    if (letter !== " ")
-                        button.disabled = true;
-                }
-            }
-        }
-
-        function getBoard() {
-            let out = "";
-
-            for (let i = 0; i < 15; i++) {
-                for (let j = 0; j < 15; j++) {
-                    out += board_table.rows[i].cells[j].firstChild.textContent;
-                }
-            }
-
-            return out;
-        }
-
-        function getXOf(field_button) {
-            return parseInt(field_button.id.split('-')[0])
-        }
-
-        function getYOf(field_button) {
-            return parseInt(field_button.id.split('-')[1])
-        }
-
-        function boardButton(field_button) {
-            if (!my_turn)
-                return
-
-            if (Object.keys(letters_on_board).length > 0) {
-                // Letters can only be placed in a straight line
-                let xGood = true;
-                let yGood = true;
-
-                for (const letter_id in letters_on_board) {
-                    if (getXOf(field_button) !== getXOf(document.getElementById(letter_id)))
-                        xGood = false;
-
-                    if (getYOf(field_button) !== getYOf(document.getElementById(letter_id)))
-                        yGood = false;
-
-                    if (!xGood && !yGood)
-                        return;
-                }
-            }
-
-            if (selected_letter != null) {
-                removeLetter(selected_letter);
-
-                if (field_button.textContent !== " ") {
-                    // Selected field is occupied
-                    // Since all occupied fields that weren't occupied this turn are not clickable
-                    // just put the letter back to the hand and place a new one
-                    putLetterInNextSlot(letters_on_board[field_button.id].textContent)
-                }
-
-                letters_on_board[field_button.id] = selected_letter;
-                field_button.textContent = selected_letter.textContent;
-                selected_letter = null;
-            } else {
-                if (field_button.textContent === " ")
-                    return;
-
-                // No letter is selected to place, place this letter back to the hand
-                putLetterInNextSlot(field_button.textContent)
-                field_button.textContent = " ";
-                delete letters_on_board[field_button.id];
-            }
-        }
-
-        for (let i = 0; i < 15; i++) {
-            const tr = document.createElement("tr");
-            for (let j = 0; j < 15; j++) {
-                const td = document.createElement("td");
-                const btn = document.createElement("button");
-                btn.id = j + "-" + i;
-                btn.onclick = function() { boardButton(btn) }
-                btn.textContent = "";
-                btn.style.width = "100%";
-                btn.style.height = "100%";
-                btn.style.fontSize = "25px";
-                td.appendChild(btn);
-                tr.appendChild(td);
-            }
-            board_table.appendChild(tr);
-        }
-    </script>
-    </div>
-
-    <!-- Letters/Turn Indicator -->
-    <div id="div_letters" style="margin:auto; width: 50%; padding-top: 20px;">
+        <!-- Board -->
+        <div id="div_board">
         <style>
-            table {float: left;}
-            table.letters {table-layout:fixed; width:400px; height:50px; border: 1px solid;}
-            table.letters td {width:50px; height:50px;}
-            table.turn_indicator {table-layout:fixed; width:100px; height:50px; border: 1px solid;}
+            table.board {table-layout:fixed; width:750px; height:750px;}
+            table.board td {width:50px; height:50px;}
         </style>
-
-        <table class="turn_indicator" id="turn_indicator">
-            <tr>
-                <td>--------</td>
-            </tr>
-        </table>
-        <table class="letters" id="letters_table"></table>
+        <table class="board" id="board_table"></table>
 
         <script>
-            function letterButton(selected) {
-                selected_letter = selected;
+            // button.textContent for text of button
+            function getButtonFor(x, y) {
+                const table = document.getElementById('board_table');
+                return table.rows[y].cells[x].innerHTML;
             }
 
-            const letters_table = document.getElementById("letters_table");
-            const tr = document.createElement("tr");
-            for (let i = 0; i < 8; i++) {
-                const td = document.createElement("td");
-                td.id = "letters-td-" + i;
-                tr.appendChild(td);
-            }
-            letters_table.appendChild(tr);
+            const board_table = document.getElementById("board_table");
 
-            function putLetterInNextSlot(letter) {
-                const table = document.getElementById('letters_table');
-
-                for (let i = 0; i < 8; i++) {
-                    if (table.rows[0].cells[i].childElementCount === 0) {
-                        const button = document.createElement("button");
-                        button.style.width = "100%";
-                        button.style.height = "100%";
-                        button.style.fontSize = "25px";
+            function setBoard(letters) {
+                for (let i = 0; i < 15; i++) {
+                    for (let j = 0; j < 15; j++) {
+                        const letter = letters.charAt((i * 15) + j)
+                        const button = board_table.rows[i].cells[j].firstChild;
                         button.textContent = letter;
-                        button.onclick = function() { letterButton(button) }
 
-                        const td = document.getElementById("letters-td-" + i);
-                        td.appendChild(button);
-                        return true;
+                        if (letter !== " ")
+                            button.disabled = true;
+                    }
+                }
+            }
+
+            function getBoard() {
+                let out = "";
+
+                for (let i = 0; i < 15; i++) {
+                    for (let j = 0; j < 15; j++) {
+                        out += board_table.rows[i].cells[j].firstChild.textContent;
                     }
                 }
 
-                return false;
+                return out;
             }
 
-            function removeLetter(button) {
-                button.parentNode.removeChild(button);
+            function getXOf(field_button) {
+                return parseInt(field_button.id.split('-')[0])
             }
 
-            function addLetters(letters) {
-                let index = 0
-                for (let i = 0; i < letters.length; i++) {
-                    if (index >= letters.length)
-                        break;
+            function getYOf(field_button) {
+                return parseInt(field_button.id.split('-')[1])
+            }
 
-                    putLetterInNextSlot(letters.charAt(i))
-                    index += 1;
+            function boardButton(field_button) {
+                if (!my_turn)
+                    return
+
+                if (Object.keys(letters_on_board).length > 0) {
+                    // Letters can only be placed in a straight line
+                    let xGood = true;
+                    let yGood = true;
+
+                    for (const letter_id in letters_on_board) {
+                        if (getXOf(field_button) !== getXOf(document.getElementById(letter_id)))
+                            xGood = false;
+
+                        if (getYOf(field_button) !== getYOf(document.getElementById(letter_id)))
+                            yGood = false;
+
+                        if (!xGood && !yGood)
+                            return;
+                    }
                 }
-            }
 
-            function indicateTurn(isMyTurn) {
-                const indicator_table = document.getElementById("turn_indicator");
-                my_turn = isMyTurn
-                if (isMyTurn) {
-                    indicator_table.rows[0].cells[0].textContent = "YOUR TURN";
-                    indicator_table.style.backgroundColor = "#54f542";
+                if (selected_letter != null) {
+                    removeLetter(selected_letter);
+
+                    if (field_button.textContent !== " ") {
+                        // Selected field is occupied
+                        // Since all occupied fields that weren't occupied this turn are not clickable
+                        // just put the letter back to the hand and place a new one
+                        putLetterInNextSlot(letters_on_board[field_button.id].textContent)
+                    }
+
+                    letters_on_board[field_button.id] = selected_letter;
+                    field_button.textContent = selected_letter.textContent;
+                    selected_letter = null;
                 } else {
-                    indicator_table.rows[0].cells[0].textContent = "ENEMY TURN";
-                    indicator_table.style.backgroundColor = "#ed2f4f";
+                    if (field_button.textContent === " ")
+                        return;
+
+                    // No letter is selected to place, place this letter back to the hand
+                    putLetterInNextSlot(field_button.textContent)
+                    field_button.textContent = " ";
+                    delete letters_on_board[field_button.id];
                 }
             }
 
-        </script>
-    </div>
-
-    <!-- Buttons -->
-    <div id="div-buttons" style="margin:auto; width: 50%; padding-top: 20px;">
-        <style>
-            table {float: left;}
-            table.letters {table-layout:fixed; width:400px; height:50px; border: 1px solid;}
-            table.letters td {width:50px; height:50px;}
-            table.turn_indicator {table-layout:fixed; width:100px; height:50px; border: 1px solid;}
-        </style>
-
-        <table class="turn_indicator" id="turn_indicator">
-            <tr>
-                <td><input type="button" id="button-accept" onclick="accept()" value="ok"></td>
-                <td><input type="button" id="button-pass" onclick="pass()" value="pass"></td>
-            </tr>
-        </table>
-
-        <script>
-            function accept() {
-                const out = []
-
-                for (const letter_id in letters_on_board) {
-                    const record = {};
-                    const field = document.getElementById(letter_id);
-
-                    record["x"] = getXOf(field);
-                    record["y"] = getYOf(field);
-                    record["value"] = field.textContent;
-                    out.push(record)
+            for (let i = 0; i < 15; i++) {
+                const tr = document.createElement("tr");
+                for (let j = 0; j < 15; j++) {
+                    const td = document.createElement("td");
+                    const btn = document.createElement("button");
+                    btn.id = j + "-" + i;
+                    btn.onclick = function() { boardButton(btn) }
+                    btn.textContent = "";
+                    btn.style.width = "100%";
+                    btn.style.height = "100%";
+                    btn.style.fontSize = "25px";
+                    td.appendChild(btn);
+                    tr.appendChild(td);
                 }
-
-                chatSocket.send(JSON.stringify({
-                    "action": "accept",
-                    "data": out
-                }))
+                board_table.appendChild(tr);
             }
-
-            function pass() {
-                chatSocket.send(JSON.stringify({
-                    "action": "pass"
-                }))
-            }
-
-            document.getElementById("button-accept").onclick = function() { accept() }
-            document.getElementById("button-pass").onclick = function() { pass() }
         </script>
+        </div>
+
+        <div style="float: bottom">
+            <!-- Letters/Turn Indicator -->
+            <div id="div_letters">
+                <style>
+                    table {float: left;}
+                    table.letters {table-layout:fixed; width:400px; height:50px; border: 1px solid;}
+                    table.letters td {width:50px; height:50px;}
+                    table.turn_indicator {table-layout:fixed; width:100px; height:50px; border: 1px solid;}
+                </style>
+
+                <table class="turn_indicator" id="turn_indicator" style="float: left">
+                    <tr>
+                        <td>--------</td>
+                    </tr>
+                </table>
+                <table class="letters" id="letters_table"></table>
+
+                <script>
+                    function letterButton(selected) {
+                        selected_letter = selected;
+                    }
+
+                    const letters_table = document.getElementById("letters_table");
+                    const tr = document.createElement("tr");
+                    for (let i = 0; i < 8; i++) {
+                        const td = document.createElement("td");
+                        td.id = "letters-td-" + i;
+                        tr.appendChild(td);
+                    }
+                    letters_table.appendChild(tr);
+
+                    function putLetterInNextSlot(letter) {
+                        const table = document.getElementById('letters_table');
+
+                        for (let i = 0; i < 8; i++) {
+                            if (table.rows[0].cells[i].childElementCount === 0) {
+                                const button = document.createElement("button");
+                                button.style.width = "100%";
+                                button.style.height = "100%";
+                                button.style.fontSize = "25px";
+                                button.textContent = letter;
+                                button.onclick = function() { letterButton(button) }
+
+                                const td = document.getElementById("letters-td-" + i);
+                                td.appendChild(button);
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    }
+
+                    function removeLetter(button) {
+                        button.parentNode.removeChild(button);
+                    }
+
+                    function addLetters(letters) {
+                        let index = 0
+                        for (let i = 0; i < letters.length; i++) {
+                            if (index >= letters.length)
+                                break;
+
+                            putLetterInNextSlot(letters.charAt(i))
+                            index += 1;
+                        }
+                    }
+
+                    function indicateTurn(isMyTurn) {
+                        const indicator_table = document.getElementById("turn_indicator");
+                        my_turn = isMyTurn
+                        if (isMyTurn) {
+                            indicator_table.rows[0].cells[0].textContent = "YOUR TURN";
+                            indicator_table.style.backgroundColor = "#54f542";
+                        } else {
+                            indicator_table.rows[0].cells[0].textContent = "ENEMY TURN";
+                            indicator_table.style.backgroundColor = "#ed2f4f";
+                        }
+                    }
+
+                </script>
+            </div>
+
+            <!-- Buttons -->
+            <div id="div-buttons">
+                <style>
+                    table {float: left; border: 1px solid; height: 50px;}
+                </style>
+
+                <table class="table-buttons" id="table-buttons">
+                    <tr>
+                        <td><input type="button" id="button-accept" onclick="accept()" style="width: 100%; height: 100%;" value="ok"></td>
+                        <td><input type="button" id="button-pass" onclick="pass()" style="width: 100%; height: 100%;" value="pass"></td>
+                    </tr>
+                </table>
+
+                <script>
+                    function accept() {
+                        const out = []
+
+                        for (const letter_id in letters_on_board) {
+                            const record = {};
+                            const field = document.getElementById(letter_id);
+
+                            record["x"] = getXOf(field);
+                            record["y"] = getYOf(field);
+                            record["value"] = field.textContent;
+                            out.push(record)
+                        }
+
+                        chatSocket.send(JSON.stringify({
+                            "action": "accept",
+                            "data": out
+                        }))
+                    }
+
+                    function pass() {
+                        chatSocket.send(JSON.stringify({
+                            "action": "pass"
+                        }))
+                    }
+
+                    document.getElementById("button-accept").onclick = function() { accept() }
+                    document.getElementById("button-pass").onclick = function() { pass() }
+                </script>
+            </div>
+        </div>
     </div>
     </body>
-
     <script>
         // IO control
         chatSocket.onmessage = function(e) {

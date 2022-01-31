@@ -6,7 +6,13 @@
 {% endblock %}
 
 {% block content %}
-    <table>
+    <h1 style="text-align:center; padding-top: 15px;">STATISTICS</h1>
+    <div id="div_board" style="margin:auto; width: 50%; padding-top: 30px;">
+    <style>
+        table {table-layout:fixed;}
+        table td {width:150px; height:50px; border: 1px solid; text-align: center}
+    </style>
+    <table id="table_score">
         <tr>
             <td>NAME</td> <td>{{ username }}</td>
         </tr>
@@ -20,4 +26,5 @@
             <td>SCORE</td> <td>{{ points }}</td>
         </tr>
     </table>
+    </div>
 {% endblock %}

@@ -6,10 +6,16 @@
 {% endblock %}
 
 {% block content %}
-    <table id="table_score">
+    <h1 style="text-align:center; padding-top: 15px;">TOP PLAYERS</h1>
+    <div id="div_board" style="margin:auto; width: 50%; padding-top: 30px;">
+    <style>
+        table {table-layout:fixed;}
+        table td {width:150px; height:50px; border: 1px solid; text-align: center}
+    </style>
+    <table id="table_score" style="float:left">
         <tr>
             <td>NAME</td>
-            <TD>POINTS</TD>
+            <td>POINTS</td>
         </tr>
         {% for e in top_points %}
             <tr>
@@ -19,10 +25,10 @@
         {% endfor %}
     </table>
 
-    <table id="table_wins">
+    <table id="table_wins" style="float:right">
         <tr>
             <td>NAME</td>
-            <TD>WINS</TD>
+            <td>WINS</td>
         </tr>
         {% for e in top_wins %}
             <tr>
@@ -31,4 +37,5 @@
             </tr>
         {% endfor %}
     </table>
+    </div>
 {% endblock %}
