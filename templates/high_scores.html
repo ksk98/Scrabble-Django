@@ -13,7 +13,7 @@
         </tr>
         {% for e in top_points %}
             <tr>
-                <td>{{ e.user.username }}</td>
+                <td>{{ e.user__username }}</td>
                 <td>{{ e.totalScore }}</td>
             </tr>
         {% endfor %}
@@ -26,7 +26,7 @@
         </tr>
         {% for e in top_wins %}
             <tr>
-                <td>{{ e.user.username }}</td>
+                <td>{{ e.user__username }}</td>
                 <td>{{ e.wins }}</td>
             </tr>
         {% endfor %}
