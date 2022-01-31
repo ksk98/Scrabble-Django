@@ -62,7 +62,7 @@ def board_to_string(board: list[list[str]]) -> str:
 
 def get_points_for_letter(value: str) -> int:
     value = value.upper()
-    if value in ["A", "E", "I", "N", "O", "R", "S", "Z"]:
+    if value in ["A", "E", "I", "N", "O", "R", "S", "W", "Z"]:
         return 1
     elif value in ["C", "D", "K", "L", "M", "P", "T", "Y"]:
         return 2

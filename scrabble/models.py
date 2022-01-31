@@ -161,6 +161,9 @@ class Room(models.Model):
         return self.in_progress
 
     def leave(self, user):
+        if self.in_progress:
+            return
+
         if self.player1 == user:
             self.player1 = None
         elif self.player2 == user:

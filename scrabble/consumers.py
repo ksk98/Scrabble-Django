@@ -288,9 +288,18 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
         await sync_to_async(room_instance.finish)()
 
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'send_finish',
+                'winner': winner_out
+            }
+        )
+
+    async def send_finish(self, event):
         await self.send(text_data=json.dumps({
             'operation': 'game_stopped',
-            'winner': winner_out
+            'winner': event['winner']
         }))
 
     @staticmethod
@@ -309,7 +318,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         letters = await sync_to_async(room_instance.pass_new_letters)()
 
-        if len(letters['player_1']) == 0 or len(letters['player_2']) == 0:
+        room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
+        if len(room_instance.player1_letters) == 0 or len(room_instance.player2_letters) == 0:
             await self.finish_game()
             return
 
