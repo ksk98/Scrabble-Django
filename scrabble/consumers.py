@@ -50,7 +50,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
         if await sync_to_async(room_instance.is_empty)():
             await sync_to_async(room_instance.delete)()
         else:
-            await self.finish_game()
+            if not room_instance.finished:
+                await self.finish_game()
 
     async def receive(self, text_data):
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
@@ -85,6 +86,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 return 1
 
         new_letters_sorted = sorted(new_letters, key=cmp_to_key(compare))
+        if len(new_letters_sorted) == 0:
+            return
 
         # validate if new letters are in straight line, what is the direction of the word
         word_direction_axis = "x"
@@ -95,7 +98,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 value = new_letters_sorted[0]["x"]
                 for letter in new_letters_sorted:
                     if letter["x"] != value:
-                        print("not straight1")
                         return False
             elif new_letters_sorted[0]["y"] == new_letters_sorted[1]["y"]:
                 word_direction_axis = "x"
@@ -103,13 +105,9 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 value = new_letters_sorted[0]["y"]
                 for letter in new_letters_sorted:
                     if letter["y"] != value:
-                        print("not straight2")
                         return False
             else:
-                print("not straight3")
                 return False
-
-        print("straight line ok, axis: " + word_direction_axis)
 
         room_instance: Room = await database_sync_to_async(Room.objects.get)(id=self.room_id)
         board = await self.array_of_board(room_instance.board, room_instance.size)
@@ -168,7 +166,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             if not goes_trough_middle:
                 return False
 
-        print("middle tile ok")
         # add letters to new board, verify if new letters don't overlap with existing letters
         for letter in new_letters_sorted:
             if board[letter["y"]][letter["x"]] != " ":
@@ -176,7 +173,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
             board[letter["y"]][letter["x"]] = letter["value"]
 
-        print("overlap ok")
         points = 0
         # validate every new word created by the change
         creates_valid_word = algorithms.creates_valid_word(
@@ -185,7 +181,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
             return False
 
         points += creates_valid_word[2]
-        print("first word ok")
 
         # if board is not empty, the new word has to connect to some other word
         for letter in new_letters_sorted:
@@ -196,12 +191,10 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 connected_to_other_word = True
 
             points += valid_word[2]
-            print("word ok")
 
         if not board_empty:
             if not connected_to_other_word:
                 return False
-        print("connects to other word or first word")
 
         await sync_to_async(room_instance.set_board)(algorithms.board_to_string(board))
         await sync_to_async(room_instance.remove_letters_for_current_player)(new_letters_sorted)
@@ -283,8 +276,8 @@ class PlayerConsumer(AsyncWebsocketConsumer):
 
         p1 = await sync_to_async(room_instance.get_player_1)()
         p2 = await sync_to_async(room_instance.get_player_2)()
-        await self.reward_player(p1, winner == p1, room_instance.player1_points)
-        await self.reward_player(p2, winner == p2, room_instance.player2_points)
+        await self.reward_player(p1, winner != p2, room_instance.player1_points)
+        await self.reward_player(p2, winner != p1, room_instance.player2_points)
 
         await sync_to_async(room_instance.finish)()
 

@@ -104,9 +104,7 @@ def profile(request):
 
 def high_scores(request):
     top_points = UserProfile.objects.values('user__username', 'totalScore').order_by('-totalScore')[:10]
-    # top_points = UserProfile.objects.values('totalScore').order_by('-totalScore')[:10]
     top_wins = UserProfile.objects.values('user__username', 'wins').order_by('-wins')[:10]
-    # top_wins = UserProfile.objects.values('wins').order_by('-wins')[:10]
     return render(request=request, template_name="high_scores.html", context={
         "top_points": top_points,
         "top_wins": top_wins
