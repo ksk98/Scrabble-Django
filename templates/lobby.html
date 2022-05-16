@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load crispy_forms_filters %}
 
 {% block head %}
-  <title>Scrabble</title>
+    <title>Scrabble</title>
 {% endblock %}
 
 
 {% block content %}
+    <script src="{% static 'js/lobby.js' %}"></script>
     <div class="container py-5" style="text-align: center;">
     <h1>LOBBY</h1>
         <table style="float: right">
@@ -15,25 +17,14 @@
                     <label for="room_name">Room name:</label>
                     <input type="text" id="room_name">
                 </th>
-                <script>
-                    function createRoom() {
-                        const rn = document.querySelector('#room_name').value;
-                        window.location = "/create_room/?room_name=" + rn
-                    }
-                </script>
                 <th>
                     <button onclick="createRoom();">CREATE</button>
                 </th>
             </tr>
             {% for room in rooms %}
-                <script>
-                    function visitRoom() {
-                        window.location = "/room/" + {{ room.id }} + "/"
-                    }
-                </script>
                 <tr>
                     <th>{{ room.name }}</th>
-                    <th><button onclick="visitRoom();">JOIN</button></th>
+                    <th><button onclick="visitRoom({{ room.id }});">JOIN</button></th>
                 </tr>
             {% endfor %}
         </table>
