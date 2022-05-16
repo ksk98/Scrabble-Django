@@ -66,7 +66,6 @@ class PlayerConsumer(AsyncWebsocketConsumer):
                 return
 
             if await self.verify_word_and_update_board(text_data_json['data']):
-                # TODO: calculate and add points
                 await self.send_new_letters()
                 await self.send_board()
                 await self.switch_turn()
