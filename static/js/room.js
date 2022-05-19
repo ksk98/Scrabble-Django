@@ -2,10 +2,7 @@ let game_in_progress = false;
 let my_turn = false;
 let letters_on_board = {};
 let selected_letter = null;
-const room_id = "{{ room_id }}";
-const chatSocket = new WebSocket(
-    'ws://' + window.location.host + '/ws/scrabble/' + room_id + '/'
-);
+let chatSocket;
 const board_table = document.getElementById("board_table");
 
 function getButtonFor(x, y) {
@@ -168,7 +165,8 @@ function pass() {
     }))
 }
 
-function initialise() {
+function initialise(room_id) {
+    chatSocket = new WebSocket('ws://' + window.location.host + '/ws/scrabble/' + room_id + '/');
     for (let i = 0; i < 15; i++) {
         const tr = document.createElement("tr");
         for (let j = 0; j < 15; j++) {

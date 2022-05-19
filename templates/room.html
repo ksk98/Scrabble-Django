@@ -8,7 +8,7 @@
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <title>Scrabble</title>
 </head>
-<body onload="initialise()">
+<body onload="initialise({{ room_id }})">
     <div style="margin:auto; padding-top: 20px; width:750px;">
         <!-- Board -->
         <div id="div_board">
@@ -52,6 +52,6 @@
             </div>
         </div>
     </div>
-    <script src="{% static 'js/room.js' %}"></script>
+    <script src="{% static 'js/room.js' %}?version=1"></script>
 </body>
 </html>
