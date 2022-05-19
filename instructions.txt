@@ -1,7 +1,15 @@
 1. Create a Redis server in a Docker container
     * docker run -p 6379:6379 -d redis:5
 
-2. Run django server
+2. Make migrations
+    * ./manage.py makemigrations projekt_pwp
+    * ./manage.py migrate
+
+2a. Create super user (optional)
+    * ./manage.py createsuperuser
+    * follow instructions
+
+3. Run django server
     * python3 manage.py runserver
 
-3. Connect to the application via http://127.0.0.1:8000/
+4. Connect to the application via http://127.0.0.1:8000/
