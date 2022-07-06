@@ -11,7 +11,7 @@ constantly==15.1.0
 cryptography==36.0.1
 daphne==3.0.2
 Deprecated==1.2.13
-Django==4.0.4
+Django==4.0.6
 django-crispy-forms==1.13.0
 hiredis==2.0.0
 hyperlink==21.0.0
